@@ -42,7 +42,15 @@ const InvoiceSchema = new mongoose.Schema({
     min: [0, 'Outstanding amount cannot be negative']
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+const ageingService = require('../services/ageingService');
+
+InvoiceSchema.virtual('ageingBucket').get(function() {
+  return ageingService.getAgeingBucket(this.dueDate);
 });
 
 module.exports = mongoose.model('Invoice', InvoiceSchema);

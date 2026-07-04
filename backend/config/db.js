@@ -4,6 +4,7 @@ const connectDB = async () => {
   try {
     const connStr = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/whatsapp-collections';
     
+    mongoose.connection.lastError = null;
     // Connect to MongoDB
     const conn = await mongoose.connect(connStr);
     
@@ -11,9 +12,14 @@ const connectDB = async () => {
     return true;
   } catch (error) {
     console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    mongoose.connection.lastError = error.message;
     // Do not crash the process immediately in development so health check works
     return false;
   }
 };
+
+mongoose.connection.on('error', (err) => {
+  mongoose.connection.lastError = err.message;
+});
 
 module.exports = connectDB;

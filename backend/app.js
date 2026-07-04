@@ -33,10 +33,14 @@ app.use('/api/whatsapp', whatsappRoutes);
 // Temporary Health/Connection check endpoint
 app.get('/api/health', (req, res) => {
   const dbConnected = mongoose.connection.readyState === 1;
+  const rawUri = process.env.MONGODB_URI || 'not set';
+  const maskedUri = rawUri.replace(/:([^:@]+)@/, ':******@');
   res.status(200).json({
     success: true,
     message: 'Express server is healthy and running',
     dbConnected: dbConnected,
+    uri: maskedUri,
+    connectionError: mongoose.connection.lastError || null,
     timestamp: new Date()
   });
 });
