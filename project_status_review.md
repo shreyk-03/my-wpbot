@@ -99,7 +99,7 @@ The production backend on Render, as well as the local environment, report `dbCo
 3. Navigate to the **Environment** settings.
 4. Click **Add Environment Variable** and enter:
    * **Key**: `MONGODB_URI`
-   * **Value**: *Your MongoDB Atlas connection URI.* (e.g., `mongodb+srv://***REMOVED***@wpagent.z0ccb60.mongodb.net/whatsapp-collections?retryWrites=true&w=majority&appName=wpagent`)
+   * **Value**: *Your MongoDB Atlas connection URI.* (e.g., `mongodb+srv://<username>:<password>@<cluster>.mongodb.net/whatsapp-collections?retryWrites=true&w=majority`)
 5. Click **Save Changes**. Render will automatically trigger a clean redeploy.
 
 #### Fix B: Adjusting MongoDB Atlas IP Whitelisting (For both Local & Render)

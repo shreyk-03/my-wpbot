@@ -18,9 +18,7 @@ import {
   Paper,
   CircularProgress,
   Alert,
-  IconButton,
-  InputAdornment,
-  Divider
+  InputAdornment
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SearchIcon from '@mui/icons-material/Search';
@@ -29,7 +27,7 @@ import FilePresentIcon from '@mui/icons-material/FilePresent';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import TableChartIcon from '@mui/icons-material/TableChart';
 
-import { uploadInvoiceFile, getExcelRecords } from '../services/api';
+import { uploadInvoiceFile, getExcelRecords, getApiErrorMessage } from '../services/api';
 
 const ExcelExplorer = () => {
   // Upload States
@@ -62,7 +60,7 @@ const ExcelExplorer = () => {
       }
     } catch (err) {
       console.error(err);
-      setFetchError(err.response?.data?.message || 'Server connection error. Is backend online?');
+      setFetchError(getApiErrorMessage(err, 'Server connection error. Is the backend online?'));
     } finally {
       setLoading(false);
     }
@@ -133,7 +131,11 @@ const ExcelExplorer = () => {
     try {
       const response = await uploadInvoiceFile(selectedFile);
       if (response && response.success) {
-        setUploadSuccess(`✓ Success! uploaded "${selectedFile.name}". ${response.recordsInserted || 0} records inserted dynamically.`);
+        const warnings = response.warnings || [];
+        setUploadSuccess(
+          `✓ Success! Uploaded "${selectedFile.name}". ${response.recordsInserted || 0} records inserted.` +
+            (warnings.length > 0 ? ` ${warnings.join(' ')}` : '')
+        );
         setSelectedFile(null);
         // Refresh Table Data
         await fetchRecords();
@@ -142,7 +144,7 @@ const ExcelExplorer = () => {
       }
     } catch (err) {
       console.error(err);
-      setUploadError(err.response?.data?.message || 'Server error occurred during uploading.');
+      setUploadError(getApiErrorMessage(err, 'Server error occurred during uploading.'));
     } finally {
       setUploading(false);
     }

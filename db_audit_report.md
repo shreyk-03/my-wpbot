@@ -1,5 +1,7 @@
 # Database Connectivity Audit Report (Final)
 
+> ⚠️ **Historical document:** this report describes a past deployment/verification. For the current status, call `GET /api/health` and check `dbConnected`.
+
 This document reports the final findings of the database connectivity audit performed on the MERN backend running in production on Render.
 
 ---
@@ -10,7 +12,7 @@ This document reports the final findings of the database connectivity audit perf
 | :--- | :--- | :--- |
 | **1. Verify MongoDB Atlas connectivity** | 🟢 **PASS** | Testing the connection locally using the connection coordinates in `.env` **SUCCEEDED** immediately. |
 | **2. Verify Render is reading correct MONGODB_URI** | 🟢 **PASS** | The Render production backend successfully reads `MONGODB_URI` from the environment. |
-| **3. Confirm the MONGODB_URI details** | 🟢 **PASS** | The URI uses the correct cluster host (`wpagent.z0ccb60.mongodb.net`), valid database credentials (`***REMOVED***`), and contains no empty spaces. |
+| **3. Confirm the MONGODB_URI details** | 🟢 **PASS** | The URI uses the correct cluster host (`<cluster>.mongodb.net`), valid database credentials (`<username>:<password>`), and contains no empty spaces. |
 | **4. Verify Atlas Network Access** | 🟢 **PASS** | The network whitelist holds active rules allowing connections from any client IP (confirmed by the successful remote handshake from both the local PC and the Render dynamic container). |
 | **5. Review Render deployment logs** | 🟢 **PASS** | Logs contain no database connection errors. Connection successfully established. |
 | **6. Verify backend connection code** | 🟢 **PASS** | `server.js` loads `dotenv` on the first line. `db.js` uses `process.env.MONGODB_URI` correctly. No hardcoded localhost overrides exist for production. Clean version restores native API output format. |

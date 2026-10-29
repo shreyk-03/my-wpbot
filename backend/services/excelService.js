@@ -30,30 +30,45 @@ const parseDate = (val) => {
   if (typeof val === 'string') {
     const trimmed = val.trim();
     if (trimmed === '') return null;
-    
-    // Try native parsing
-    let parsedDate = new Date(trimmed);
-    if (!isNaN(parsedDate.getTime())) {
-      parsedDate.setUTCHours(0, 0, 0, 0);
-      return parsedDate;
+
+    // ISO dates (YYYY-MM-DD) and month-name dates (DD-MMM-YYYY) are
+    // unambiguous, so let the native parser handle them first.
+    if (/^\d{4}-\d{1,2}-\d{1,2}/.test(trimmed) || /[A-Za-z]{3,}/.test(trimmed)) {
+      const nativeDate = new Date(trimmed);
+      if (!isNaN(nativeDate.getTime())) {
+        nativeDate.setUTCHours(0, 0, 0, 0);
+        return nativeDate;
+      }
     }
-    
-    // Process DD/MM/YYYY or DD-MM-YYYY format
-    const parts = trimmed.split(/[-/]/);
-    if (parts.length === 3) {
+
+    // Numeric dates are day-first (DD/MM/YYYY or DD-MM-YYYY), matching the
+    // Indian AR sheets this app is built for. Previously "01/10/2026" was
+    // parsed by the native parser as 10 January instead of 1 October.
+    const parts = trimmed.split(/[-/.]/);
+    if (parts.length === 3 && parts.every((part) => /^\d+$/.test(part))) {
       const day = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10) - 1; // months are 0-indexed in JS
       const year = parseInt(parts[2], 10);
-      
-      // Ensure valid numbers
-      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-        // Handle 2-digit years if present
-        const fullYear = year < 100 ? (year + (year < 50 ? 2000 : 1900)) : year;
-        parsedDate = new Date(Date.UTC(fullYear, month, day));
-        if (!isNaN(parsedDate.getTime())) {
-          return parsedDate;
-        }
+
+      // Handle 2-digit years if present
+      const fullYear = year < 100 ? (year + (year < 50 ? 2000 : 1900)) : year;
+      const parsedDate = new Date(Date.UTC(fullYear, month, day));
+
+      // Reject impossible dates such as 31/02/2026.
+      if (
+        !isNaN(parsedDate.getTime()) &&
+        parsedDate.getUTCDate() === day &&
+        parsedDate.getUTCMonth() === month
+      ) {
+        return parsedDate;
       }
+    }
+
+    // Fallback for any other human-readable format.
+    const fallbackDate = new Date(trimmed);
+    if (!isNaN(fallbackDate.getTime())) {
+      fallbackDate.setUTCHours(0, 0, 0, 0);
+      return fallbackDate;
     }
   }
   

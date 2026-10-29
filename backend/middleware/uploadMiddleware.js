@@ -20,15 +20,16 @@ const storage = multer.diskStorage({
   }
 });
 
-// Filter out non-xlsx uploads
+// Accept both modern (.xlsx) and legacy (.xls) Excel workbooks.
+const ALLOWED_EXTENSIONS = ['.xlsx', '.xls'];
+
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
-  
-  // Accept only Excel XML sheets (.xlsx)
-  if (ext !== '.xlsx') {
-    return cb(new Error('Extension Rejected: Only .xlsx files are supported.'), false);
+
+  if (!ALLOWED_EXTENSIONS.includes(ext)) {
+    return cb(new Error('Extension Rejected: Only .xlsx and .xls files are supported.'), false);
   }
-  
+
   cb(null, true);
 };
 

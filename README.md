@@ -212,7 +212,8 @@ Access the page on your browser: **[http://localhost:5173](http://localhost:5173
 
 ### 🩺 System Diagnostics
 * **`GET /api/health`**
-  * Description: Simple connection heartbeat test checking database readiness.
+  * Description: Connection heartbeat test checking database readiness. Returns `200` when MongoDB is connected and `503` when it is unavailable, including `dbState` and `lastDbError` diagnostics.
+  * Tip: append `?check=1` to trigger one background reconnect attempt.
 
 ---
 

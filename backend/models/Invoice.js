@@ -8,7 +8,7 @@ const InvoiceSchema = new mongoose.Schema({
   },
   spoc: {
     type: String,
-    required: [true, 'SPOC is required'],
+    default: 'N/A',
     trim: true
   },
   invoiceNo: {

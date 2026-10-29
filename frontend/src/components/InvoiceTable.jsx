@@ -10,7 +10,6 @@ import {
   TablePagination,
   Paper,
   Chip,
-  Box,
   Typography
 } from '@mui/material';
 
@@ -33,8 +32,6 @@ const formatDate = (dateStr) => {
 };
 
 const getBucketChip = (bucketName) => {
-  let color = 'default';
-  let variant = 'outlined';
   let styles = {};
 
   switch (bucketName) {

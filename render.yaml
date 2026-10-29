@@ -7,8 +7,6 @@ services:
     startCommand: node server.js
     rootDir: backend
     envVars:
-      - key: PORT
-        value: 5000
       - key: MONGODB_URI
         sync: false
       - key: TWILIO_ACCOUNT_SID

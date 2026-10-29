@@ -13,7 +13,7 @@ import {
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
-import { getInvoices } from '../services/api';
+import { getInvoices, getApiErrorMessage } from '../services/api';
 import StatCards from '../components/StatCards';
 import SearchBar from '../components/SearchBar';
 import BucketTabs from '../components/BucketTabs';
@@ -62,10 +62,12 @@ const Dashboard = () => {
         } else {
           setLastUploadTime(null);
         }
+      } else {
+        setErrorMsg((response && response.message) || 'Failed to load invoices.');
       }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
-      setErrorMsg('Could not establish database connection. Ensure your MongoDB service and Node API backend are running.');
+      setErrorMsg(getApiErrorMessage(err, 'Failed to load invoices. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -76,9 +78,17 @@ const Dashboard = () => {
   }, []);
 
   // 2. Upload Callback Handlers
-  const handleUploadSuccess = (recordsImported) => {
-    setSnackbarMsg(`✓ Excel Uploaded Successfully: Imported ${recordsImported} invoices.`);
-    setSnackbarSeverity('success');
+  const handleUploadSuccess = (result) => {
+    const recordsImported =
+      typeof result === 'number' ? result : (result && result.recordsInserted) || 0;
+    const warnings = (result && result.warnings) || [];
+
+    setSnackbarMsg(
+      warnings.length > 0
+        ? `✓ Imported ${recordsImported} rows. ${warnings.join(' ')}`
+        : `✓ Excel Uploaded Successfully: Imported ${recordsImported} invoices.`
+    );
+    setSnackbarSeverity(warnings.length > 0 ? 'warning' : 'success');
     setSnackbarOpen(true);
     fetchDashboardData();
   };
@@ -100,11 +110,15 @@ const Dashboard = () => {
   };
 
   // Filter invoices pipeline
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
   const filteredInvoices = invoices.filter(inv => {
     // A. Apply Search Filter (Customer or Invoice Number)
+    const customer = String(inv.customer || '').toLowerCase();
+    const invoiceNo = String(inv.invoiceNo || '').toLowerCase();
     const matchesSearch =
-      inv.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inv.invoiceNo.toLowerCase().includes(searchTerm.toLowerCase());
+      normalizedSearchTerm === '' ||
+      customer.includes(normalizedSearchTerm) ||
+      invoiceNo.includes(normalizedSearchTerm);
 
     // B. Apply Bucket Tab Filter
     const matchesTab = selectedBucketTab === 'All' || inv.ageingBucket === selectedBucketTab;
@@ -113,7 +127,7 @@ const Dashboard = () => {
   });
 
   // Calculate high-level summary cards stats (always based on total database invoices list)
-  const totalInvoicesCount = invoices.length;
+  const activeInvoicesCount = invoices.filter(inv => (inv.outstanding || 0) > 0).length;
   const totalOutstandingSum = invoices.reduce((sum, inv) => sum + (inv.outstanding || 0), 0);
 
   return (
@@ -158,7 +172,7 @@ const Dashboard = () => {
 
         {/* Top Summary StatCards */}
         <StatCards
-          count={totalInvoicesCount}
+          count={activeInvoicesCount}
           totalOutstanding={totalOutstandingSum}
           lastImportTime={lastUploadTime}
         />
@@ -186,19 +200,34 @@ const Dashboard = () => {
                     <p>Loading table records...</p>
                   </Box>
                 ) : invoices.length === 0 ? (
-                  /* Empty state layout */
-                  <Box textAlign="center" py={8} px={2} border="1px dashed" borderColor="divider" borderRadius={2} bgcolor="#fafafa">
-                    <CloudUploadIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                    <Typography variant="h6" fontWeight={750} mb={1}>
-                      No invoices uploaded yet
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" mb={3} maxWidth={400} mx="auto">
-                      Get started by importing your AR sheet template. Once processed, you will see lists, breakdowns, and past due details in real-time.
-                    </Typography>
-                    <Button variant="outlined" startIcon={<CloudUploadIcon />} onClick={() => setUploadDialogOpen(true)}>
-                      Upload First Sheet
-                    </Button>
-                  </Box>
+                  errorMsg ? (
+                    /* Error state: do not pretend the database is simply empty */
+                    <Box textAlign="center" py={8} px={2} border="1px dashed" borderColor="divider" borderRadius={2} bgcolor="#fafafa">
+                      <Typography variant="h6" fontWeight={750} mb={1}>
+                        Unable to load invoices
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" mb={3} maxWidth={420} mx="auto">
+                        The dashboard could not reach the API. Check the error above, then retry.
+                      </Typography>
+                      <Button variant="outlined" onClick={() => fetchDashboardData()}>
+                        Retry
+                      </Button>
+                    </Box>
+                  ) : (
+                    /* Empty state layout */
+                    <Box textAlign="center" py={8} px={2} border="1px dashed" borderColor="divider" borderRadius={2} bgcolor="#fafafa">
+                      <CloudUploadIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                      <Typography variant="h6" fontWeight={750} mb={1}>
+                        No invoices uploaded yet
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" mb={3} maxWidth={400} mx="auto">
+                        Get started by importing your AR sheet template. Once processed, you will see lists, breakdowns, and past due details in real-time.
+                      </Typography>
+                      <Button variant="outlined" startIcon={<CloudUploadIcon />} onClick={() => setUploadDialogOpen(true)}>
+                        Upload First Sheet
+                      </Button>
+                    </Box>
+                  )
                 ) : (
                   <InvoiceTable invoices={filteredInvoices} />
                 )}

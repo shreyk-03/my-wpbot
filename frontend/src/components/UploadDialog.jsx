@@ -52,9 +52,9 @@ const UploadDialog = ({ open, onClose, onUploadSuccess }) => {
   const validateAndSetFile = (selectedFile) => {
     setErrorMessage('');
     const ext = selectedFile.name.split('.').pop().toLowerCase();
-    
-    if (ext !== 'xlsx') {
-      setErrorMessage('Unsupported file format. Please upload an Excel sheet (.xlsx) only.');
+
+    if (ext !== 'xlsx' && ext !== 'xls') {
+      setErrorMessage('Unsupported file format. Please upload an Excel sheet (.xlsx or .xls).');
       setFile(null);
       return;
     }
@@ -73,7 +73,7 @@ const UploadDialog = ({ open, onClose, onUploadSuccess }) => {
       const response = await uploadInvoiceFile(file);
       
       if (response && response.success) {
-        onUploadSuccess(response.recordsImported || 0);
+        onUploadSuccess(response);
         handleCloseClear();
       } else {
         setErrorMessage(response.message || 'File upload failed. Please verify format.');
@@ -138,7 +138,7 @@ const UploadDialog = ({ open, onClose, onUploadSuccess }) => {
           <input
             type="file"
             id="xlsx-file-upload-input"
-            accept=".xlsx"
+            accept=".xlsx,.xls"
             style={{ display: 'none' }}
             onChange={handleFileChange}
             disabled={uploading}
@@ -163,7 +163,7 @@ const UploadDialog = ({ open, onClose, onUploadSuccess }) => {
                     Drag and drop your spreadsheet here or click to browse
                   </Typography>
                   <Typography variant="caption" color="text.secondary" mt={0.5}>
-                    Accepts only Microsoft Excel XML formats (.xlsx)
+                    Accepts Microsoft Excel formats (.xlsx, .xls)
                   </Typography>
                 </>
               )}
